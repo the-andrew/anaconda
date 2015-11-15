@@ -60,7 +60,7 @@ func (a TwitterApi) GetListTweets(listID int64, includeRTs bool, v url.Values) (
 	return tweets, (<-response_ch).err
 }
 
-func (a TwitterApi) GetListMembers(listID int64, v url.Values) (users []User, err error) {
+func (a TwitterApi) GetListMembers(listID int64, v url.Values) (users []UserCursor, err error) {
 	if v == nil {
 		v = url.Values{}
 	}
