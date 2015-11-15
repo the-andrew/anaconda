@@ -59,3 +59,14 @@ func (a TwitterApi) GetListTweets(listID int64, includeRTs bool, v url.Values) (
 	a.queryQueue <- query{BaseUrl + "/lists/statuses.json", v, &tweets, _GET, response_ch}
 	return tweets, (<-response_ch).err
 }
+
+func (a TwitterApi) GetListMembers(listID int64, v url.Values) (users []User, err error) {
+	if v == nil {
+		v = url.Values{}
+	}
+	v.Set("list_id", strconv.FormatInt(listID, 10))
+
+	response_ch := make(chan response)
+	a.queryQueue <- query{BaseUrl + "/lists/members.json", v, &users, _GET, response_ch}
+	return users, (<-response_ch).err
+}
