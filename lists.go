@@ -33,6 +33,28 @@ func (a TwitterApi) AddUserToList(screenName string, listID int64, v url.Values)
 	return addUserToListResponse.Users, (<-response_ch).err
 }
 
+func (a TwitterApi) AddUserToListAny(v url.Values) (users []User, err error) {
+	if v == nil {
+		v = url.Values{}
+	}
+
+	var addUserToListResponse AddUserToListResponse
+
+	response_ch := make(chan response)
+	a.queryQueue <- query{BaseUrl + "/lists/members/create.json", v, &addUserToListResponse, _POST, response_ch}
+	return addUserToListResponse.Users, (<-response_ch).err
+}
+
+func (a TwitterApi) RemoveUserFromListAny(v url.Values) (user User, err error) {
+	if v == nil {
+		v = url.Values{}
+	}
+
+	response_ch := make(chan response)
+	a.queryQueue <- query{BaseUrl + "/lists/members/destroy.json", v, &user, _POST, response_ch}
+	return user, (<-response_ch).err
+}
+
 // GetListsOwnedBy implements /lists/ownerships.json
 // screen_name, count, and cursor are all optional values
 func (a TwitterApi) GetListsOwnedBy(userID int64, v url.Values) (lists []List, err error) {
@@ -40,6 +62,19 @@ func (a TwitterApi) GetListsOwnedBy(userID int64, v url.Values) (lists []List, e
 		v = url.Values{}
 	}
 	v.Set("user_id", strconv.FormatInt(userID, 10))
+
+	var listResponse ListResponse
+
+	response_ch := make(chan response)
+	a.queryQueue <- query{BaseUrl + "/lists/ownerships.json", v, &listResponse, _GET, response_ch}
+	return listResponse.Lists, (<-response_ch).err
+}
+
+func (a TwitterApi) GetListsOwnedByScreenName(screenName string, v url.Values) (lists []List, err error) {
+	if v == nil {
+		v = url.Values{}
+	}
+	v.Set("screen_name", screenName)
 
 	var listResponse ListResponse
 
@@ -58,4 +93,32 @@ func (a TwitterApi) GetListTweets(listID int64, includeRTs bool, v url.Values) (
 	response_ch := make(chan response)
 	a.queryQueue <- query{BaseUrl + "/lists/statuses.json", v, &tweets, _GET, response_ch}
 	return tweets, (<-response_ch).err
+}
+
+// GetListMembersByID implements /lists/members.json
+func (a TwitterApi) GetListMembersByID(listID int64, v url.Values) (users []User, err error) {
+	if v == nil {
+		v = url.Values{}
+	}
+	v.Set("list_id", strconv.FormatInt(listID, 10))
+
+	var addUserToListResponse AddUserToListResponse
+
+	response_ch := make(chan response)
+	a.queryQueue <- query{BaseUrl + "/lists/members.json", v, &addUserToListResponse, _POST, response_ch}
+	return addUserToListResponse.Users, (<-response_ch).err
+}
+
+// GetListMembersBySlug implements /lists/members.json
+func (a TwitterApi) GetListMembersBySlug(slug string, v url.Values) (users []User, err error) {
+	if v == nil {
+		v = url.Values{}
+	}
+	v.Set("slug", slug)
+
+	var addUserToListResponse AddUserToListResponse
+
+	response_ch := make(chan response)
+	a.queryQueue <- query{BaseUrl + "/lists/members.json", v, &addUserToListResponse, _POST, response_ch}
+	return addUserToListResponse.Users, (<-response_ch).err
 }
