@@ -45,6 +45,19 @@ func (a TwitterApi) AddUserToListAny(v url.Values) (users []User, err error) {
 	return addUserToListResponse.Users, (<-response_ch).err
 }
 
+// AddUsersToList implements /lists/members/create_all.json
+func (a TwitterApi) AddUsersToListAny(v url.Values) (users []User, err error) {
+	if v == nil {
+		v = url.Values{}
+	}
+
+	var addUserToListResponse AddUserToListResponse
+
+	response_ch := make(chan response)
+	a.queryQueue <- query{a.baseUrl + "/lists/members/create_all.json", v, &addUserToListResponse, _POST, response_ch}
+	return addUserToListResponse.Users, (<-response_ch).err
+}
+
 func (a TwitterApi) RemoveUserFromListAny(v url.Values) (user User, err error) {
 	if v == nil {
 		v = url.Values{}
@@ -102,23 +115,20 @@ func (a TwitterApi) GetListMembersByID(listID int64, v url.Values) (users []User
 	}
 	v.Set("list_id", strconv.FormatInt(listID, 10))
 
-	var addUserToListResponse AddUserToListResponse
-
 	response_ch := make(chan response)
-	a.queryQueue <- query{BaseUrl + "/lists/members.json", v, &addUserToListResponse, _POST, response_ch}
-	return addUserToListResponse.Users, (<-response_ch).err
+	a.queryQueue <- query{BaseUrl + "/lists/members.json", v, &users, _POST, response_ch}
+	return users, (<-response_ch).err
 }
 
 // GetListMembersBySlug implements /lists/members.json
-func (a TwitterApi) GetListMembersBySlug(slug string, v url.Values) (users []User, err error) {
+func (a TwitterApi) GetListMembersBySlug(slug string, screenName string, v url.Values) (users UserCursor, err error) {
 	if v == nil {
 		v = url.Values{}
 	}
 	v.Set("slug", slug)
-
-	var addUserToListResponse AddUserToListResponse
+	v.Set("owner_screen_name", screenName)
 
 	response_ch := make(chan response)
-	a.queryQueue <- query{BaseUrl + "/lists/members.json", v, &addUserToListResponse, _POST, response_ch}
-	return addUserToListResponse.Users, (<-response_ch).err
+	a.queryQueue <- query{BaseUrl + "/lists/members.json", v, &users, _POST, response_ch}
+	return users, (<-response_ch).err
 }
