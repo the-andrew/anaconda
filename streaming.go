@@ -195,6 +195,8 @@ func jsonToKnownType(j []byte) interface{} {
 		return *o
 	} else if o := new(Event); jsonAsStruct(j, "/target_object", &o) {
 		return *o
+	} else if o := new(Event); jsonAsStruct(j, "/target", &o) {
+		return *o
 	} else {
 		return nil
 	}
